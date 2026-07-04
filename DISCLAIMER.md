@@ -6,7 +6,7 @@
   intended for minors.
 
 - **Hobbyist hardware — build and use at your own risk.** Strong Vibes Playapp
-  is open-source software that can drive a motor over Bluetooth Low Energy,
+  is open-source software that can drive a motor over BLE,
   including on do-it-yourself or hobbyist hardware. You are responsible for the
   hardware you build, connect, and operate, and for using it safely and legally.
 

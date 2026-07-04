@@ -1,37 +1,17 @@
-# Security Policy
+# Security
 
-Strong Vibes Playapp is a browser app that drives a **physical motor over
-Bluetooth Low Energy**. Because a vulnerability could affect a device acting on
-a person's body, we take reports seriously and ask you to disclose privately.
+**This is an open starter / developer project — a reference you build on, not a
+finished product.** It is provided **as-is, with no security guarantees**. If you
+build, deploy, or ship anything based on it, **you are responsible for its
+security**: review the code, secure your own keys and deployments, and make it
+safe for your users and hardware.
 
-## Reporting a vulnerability
+That said, we appreciate a heads-up. If you spot a security problem:
 
-**Please do not open a public issue for security problems.**
-
-Use one of these private channels:
-
-- **GitHub Security Advisories** — open a private report via the repository's
-  **Security → Report a vulnerability** tab (preferred).
-- If that is unavailable, contact the maintainers through the umbrella project
+- Please **don't** open a public issue for it.
+- Use the repository's **Security → Report a vulnerability** tab (private
+  advisory), or contact the maintainers via the umbrella project
   `amok-products/strong-vibes`.
 
-Please include:
-
-- A description of the issue and its impact (especially anything that could
-  cause the device to run an unintended or unsafe motor pattern / intensity).
-- Steps to reproduce, affected version, browser, and OS.
-- Any proof-of-concept, logs, or BLE traffic captures.
-
-## What to expect
-
-- We aim to acknowledge a report within a few business days.
-- We will work with you on a fix and a coordinated disclosure timeline, and
-  credit you if you wish.
-
-## Scope notes
-
-- This app requires Chrome/Edge Web Bluetooth and a **secure context** (HTTPS or
-  `localhost`). Reports about running the app over plain HTTP on a remote origin
-  are expected behavior, not a vulnerability.
-- Optional Supabase/MCP integrations are off unless explicitly configured; issues
-  in those paths should note the configuration used.
+We'll look into it and fix what we reasonably can — but please don't expect a
+formal SLA. This is a community project.

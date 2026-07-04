@@ -1,7 +1,7 @@
 # Strong Vibes Playapp
 
 **Strong Vibes Playapp by europemagicwand.com** is a browser-based controller for
-Bluetooth Low Energy massager devices. It runs entirely in Chrome/Edge using the
+BLE massager devices. It runs entirely in Chrome/Edge using the
 **Web Bluetooth API** — connect to a device, build and send motor patterns
 (linear / sine / gaussian waveforms), adjust intensity live, read device info,
 and inspect the raw BLE traffic. No install, no backend required: it's a static
