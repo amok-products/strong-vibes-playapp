@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-surface-100 text-surface-900 dark:bg-surface-900 dark:text-surface-100 font-sans;
+    line-height: 1.5;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-300 dark:bg-surface-700 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-surface-400 dark:bg-surface-600;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg;
+  }
+
+  .panel-inset {
+    @apply bg-surface-50 dark:bg-surface-950 border border-surface-200 dark:border-surface-700 rounded-lg;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2 rounded-md border border-surface-300 dark:border-surface-600
+           bg-white dark:bg-surface-800 text-surface-900 dark:text-surface-100
+           placeholder-surface-400 dark:placeholder-surface-500
+           focus:outline-none focus:ring-2 focus:ring-accent-500/40 focus:border-accent-500
+           transition-colors text-sm;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md
+           text-sm font-medium transition-all duration-150
+           focus:outline-none focus:ring-2 focus:ring-offset-1
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-accent-500 hover:bg-accent-600 text-white
+           focus:ring-accent-500 active:bg-accent-700;
+  }
+
+  .btn-secondary {
+    @apply btn bg-surface-200 dark:bg-surface-700 hover:bg-surface-300 dark:hover:bg-surface-600
+           text-surface-700 dark:text-surface-200
+           focus:ring-surface-400;
+  }
+
+  .btn-danger {
+    @apply btn bg-danger-500 hover:bg-danger-600 text-white
+           focus:ring-danger-500 active:bg-danger-600;
+  }
+
+  .btn-ghost {
+    @apply btn hover:bg-surface-200 dark:hover:bg-surface-700
+           text-surface-600 dark:text-surface-400
+           focus:ring-surface-400;
+  }
+
+  .btn-sm {
+    @apply px-2 py-1 text-xs;
+  }
+
+  .mono-display {
+    @apply font-mono text-xs rounded-md p-3 overflow-x-auto
+           bg-surface-50 text-surface-800 border border-surface-200
+           dark:bg-surface-950 dark:text-green-400 dark:border-surface-700;
+  }
+
+  .accent-slider {
+    background: linear-gradient(to right, #4A4234, #C49A3A);
+  }
+
+  .accent-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #C49A3A;
+    cursor: pointer;
+    border: 2px solid #F5F1EB;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    margin-top: -4px;
+  }
+
+  .accent-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #C49A3A;
+    cursor: pointer;
+    border: 2px solid #F5F1EB;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  .accent-slider::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, #4A4234, #C49A3A);
+  }
+
+  .accent-slider::-moz-range-track {
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, #4A4234, #C49A3A);
+  }
+}

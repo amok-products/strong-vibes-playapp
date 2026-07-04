@@ -1,0 +1,39 @@
+# Continuous integration gate: lint + typecheck + production build on every push
+# to main and every pull request. This is the quality gate the repo previously
+# lacked — since main auto-deploys to playapp.emw4u.com (see deploy-pages.yml),
+# a red build here means a regression should not be merged/deployed.
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build

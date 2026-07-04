@@ -1,0 +1,50 @@
+{
+  "name": "strong-vibes-playapp",
+  "private": true,
+  "version": "2.14.2",
+  "type": "module",
+  "description": "Strong Vibes Playapp — a Chrome/Edge Web Bluetooth controller for BLE massager devices, speaking the Strong Vibes Protocol.",
+  "author": "AMOK / Europe Magic Wand",
+  "license": "Apache-2.0",
+  "homepage": "https://playapp.emw4u.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amok-products/strong-vibes-playapp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/amok-products/strong-vibes-playapp/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
+    "lucide-react": "^0.344.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.9.1",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@types/web-bluetooth": "^0.0.21",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.18",
+    "eslint": "^9.9.1",
+    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+    "eslint-plugin-react-refresh": "^0.4.11",
+    "globals": "^15.9.0",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.5.3",
+    "typescript-eslint": "^8.3.0",
+    "vite": "^5.4.2"
+  }
+}

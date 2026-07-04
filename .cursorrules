@@ -1,0 +1,9 @@
+# Cursor rules
+
+Read AGENTS.md at the repository root and follow it. It is the canonical operating
+manual for AI assistants working in this repo: verified build/run commands, the
+Chrome/Web-Bluetooth constraint, project structure, the frozen device/wire-format
+contracts you must not rename, the versioning convention, and the "never commit"
+rules.
+
+Start every task by reading AGENTS.md.

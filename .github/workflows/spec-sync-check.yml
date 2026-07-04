@@ -1,0 +1,55 @@
+name: Protocol spec mirror sync check
+
+# Verifies that vibe-protocol-skill.md (a synced mirror) has not diverged from the
+# canonical Strong Vibes Protocol spec in the umbrella repo.
+#
+# Guarded on purpose: if the canonical source is not reachable yet (the umbrella
+# repo is private or not published), this job SKIPS with a notice instead of
+# failing — so it can't red-fail the repo before the umbrella spec is live.
+
+on:
+  push:
+    paths:
+      - 'vibe-protocol-skill.md'
+      - '.github/workflows/spec-sync-check.yml'
+  pull_request:
+    paths:
+      - 'vibe-protocol-skill.md'
+      - '.github/workflows/spec-sync-check.yml'
+  workflow_dispatch:
+
+jobs:
+  spec-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compare mirror against canonical
+        env:
+          # Canonical spec in the umbrella repo. Update the path if it moves.
+          CANONICAL_URL: https://raw.githubusercontent.com/amok-products/strong-vibes/main/skills/vibe-protocol-public.md
+        run: |
+          set -euo pipefail
+          echo "Fetching canonical: $CANONICAL_URL"
+          code=$(curl -sSL -o canonical.md -w '%{http_code}' "$CANONICAL_URL" || echo "000")
+          if [ "$code" != "200" ]; then
+            echo "::notice::Canonical spec not reachable (HTTP $code) — umbrella repo may not be published yet. Skipping divergence check."
+            exit 0
+          fi
+
+          # The local mirror carries one injected banner line (the blockquote that
+          # starts with '> **Canonical source:') that the canonical does not. Strip
+          # exactly that line before comparing so the check measures real content
+          # divergence only — anchored so it can't accidentally mask body lines.
+          strip() { grep -v -e '^> \*\*Canonical source:' "$1"; }
+          strip vibe-protocol-skill.md > local.stripped
+          strip canonical.md          > canonical.stripped
+
+          if diff -u canonical.stripped local.stripped > spec.diff; then
+            echo "Mirror is in sync with the canonical spec."
+          else
+            echo "::error::vibe-protocol-skill.md has diverged from the canonical spec (amok-products/strong-vibes). Sync from upstream; do not edit the mirror here."
+            cat spec.diff
+            exit 1
+          fi
