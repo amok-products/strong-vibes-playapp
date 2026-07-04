@@ -5,6 +5,27 @@ All notable changes to Strong Vibes Playapp are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project aims to follow [Semantic Versioning](https://semver.org/).
 
+## [2.14.3] - 2026-07-04
+
+Doc/CI pre-launch fixes (no app behavior changed).
+
+### Fixed
+- **Spec-sync CI gate** (`.github/workflows/spec-sync-check.yml`) — pointed
+  `CANONICAL_URL` at the live spec path (`amok-products/strong-vibes` →
+  `protocol/strong-vibes-protocol.md`). The old `skills/vibe-protocol-public.md`
+  path returned 404, so the gate silently *skipped* and never actually checked
+  the mirror for divergence.
+
+### Changed
+- **`vibe-protocol-skill.md`** — re-synced the protocol-spec mirror from the
+  (now-reachable) canonical source so the reactivated divergence check passes;
+  the injected `Canonical source:` banner is preserved.
+- **`esp32-firmware-skill.md`** — rebranded the shipped app name to **Strong
+  Vibes Playapp** and the knob's advertised BLE name / handshake identifier to
+  **Strong Vibes Knob** (the shipped, frozen cross-repo contract), and updated
+  the illustrative firmware directory to `strong-vibes-knob-firmware/`. The
+  massager `EMW` advertising prefix is unchanged.
+
 ## [2.14.2] - 2026-07-04
 
 Pre-public-launch polish (software-only chores — no device behavior changed).
@@ -252,6 +273,7 @@ Initial public release of **Strong Vibes Playapp by europemagicwand.com**.
 - Web Bluetooth controller for BLE massager devices (Chrome/Edge). Optional
   Supabase (community sharing) and MCP integrations are off unless configured.
 
+[2.14.3]: https://github.com/amok-products/strong-vibes-playapp/releases/tag/v2.14.3
 [2.14.2]: https://github.com/amok-products/strong-vibes-playapp/releases/tag/v2.14.2
 [2.14.1]: https://github.com/amok-products/strong-vibes-playapp/releases/tag/v2.14.1
 [2.14.0]: https://github.com/amok-products/strong-vibes-playapp/releases/tag/v2.14.0
