@@ -1,6 +1,6 @@
 # ESP32 Knob Controller — Firmware Skill
 
-This document describes how to build firmware for an ESP32-S3 rotary knob controller that pairs with the EMW Vibe App via Bluetooth Low Energy (BLE). The knob acts as a physical remote control, sending rotation and button events to the web app and displaying current state on a small TFT screen.
+This document describes how to build firmware for an ESP32-S3 rotary knob controller that pairs with the Strong Vibes Playapp via Bluetooth Low Energy (BLE). The knob acts as a physical remote control, sending rotation and button events to the web app and displaying current state on a small TFT screen.
 
 ## Architecture
 
@@ -75,7 +75,7 @@ UTF-8 encoded JSON string, max 128 bytes:
 UTF-8 encoded JSON:
 
 ```json
-{"type":"knob","version":1,"name":"EMW Knob v1"}
+{"type":"knob","version":1,"name":"Strong Vibes Knob v1"}
 ```
 
 ## Hardware
@@ -104,7 +104,7 @@ UTF-8 encoded JSON:
 ## Project Structure (PlatformIO)
 
 ```
-emw-knob-firmware/
+strong-vibes-knob-firmware/
   platformio.ini
   src/
     main.cpp          — Setup and main loop
@@ -163,7 +163,7 @@ NimBLECharacteristic* buttonChar;
 NimBLECharacteristic* displayChar;
 
 void setupBLE() {
-  NimBLEDevice::init("EMW Knob");
+  NimBLEDevice::init("Strong Vibes Knob");
   NimBLEDevice::setPower(ESP_PWR_LVL_P9);
 
   NimBLEServer* server = NimBLEDevice::createServer();
@@ -391,7 +391,7 @@ void setup() {
   setupEncoder();
   setupBLE();
 
-  Serial.println("EMW Knob ready");
+  Serial.println("Strong Vibes Knob ready");
 }
 
 void loop() {
@@ -404,9 +404,9 @@ void loop() {
 ## Testing
 
 1. Flash the firmware to the ESP32-S3
-2. Open the EMW Vibe App in Chrome/Edge
+2. Open the Strong Vibes Playapp in Chrome/Edge
 3. Go to Play > Devices > ESP32 Knob Display
-4. Click "Connect Knob" — the browser BLE picker should show "EMW Knob"
+4. Click "Connect Knob" — the browser BLE picker should show "Strong Vibes Knob"
 5. Rotate the encoder — the app's intensity/speed slider should respond
 6. Press the button — the app should toggle play/stop
 7. The display should show the current pattern name and MIC level

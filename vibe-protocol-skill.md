@@ -1,14 +1,24 @@
----
-name: vibe-protocol-public
-description: "Complete, self-contained reference for the Vibe Protocol — a BLE GATT datagram protocol for controlling motor/vibration patterns on devices like the Europe Magic Wand (EMW) and the Knob bridge. Use this to build a Web Bluetooth (Chrome/Edge) controller, a mobile app, or any Vibe client, and implement the full protocol in one pass: discover the service, send motor patterns (linear / sine / gaussian waveforms), adjust intensity live, read device info, and parse state/error notifications. Datagram-based, 2 characteristics, BLE 4.2+; everything fits in a single GATT write/notify. PUBLIC / open-source friendly — no proprietary device internals."
-version: "Vibe Protocol v1.0 (2-characteristic design). Verified against the reference EMW firmware 2026-06-02. Public skill rev. 1."
----
+> **Canonical source:** [`amok-products/strong-vibes` → `protocol/strong-vibes-protocol.md`](https://github.com/amok-products/strong-vibes/blob/main/protocol/strong-vibes-protocol.md) — this file is a **synced mirror; do not edit here.** Propose spec changes upstream, where a CI check flags divergence.
+# Strong Vibes Protocol
 
-> **Canonical source:** `amok-products/strong-vibes` — this file is a **synced copy. Do not edit here.** Propose spec changes upstream; a CI check flags divergence. (The `EMW` / `Europe Magic Wand` references below mirror the upstream spec and are updated there, not in this app.)
+**Strong Vibes Protocol by europemagicwand.com** — canonical specification, version **1.0.0**.
 
-# Vibe Protocol — Implementation Reference (public)
+> **This document is the canonical source of the Strong Vibes Protocol.** The
+> reference implementations (Strong Vibes Playapp, Strong Vibes Knob Control)
+> each keep a **synced copy** of this file with a header pointing here; a CI
+> check flags divergence. Propose spec changes in this repo
+> (`amok-products/strong-vibes`), never in a mirror.
+>
+> Verified against the reference **Europe Magic Wand®** (EMW) firmware. The
+> wire-level identifiers below retain the historical `Vibe` / `VIBE_` names
+> (e.g. `VIBE_VER`, the `0x10` first byte) for on-the-wire compatibility —
+> "Strong Vibes Protocol" is the public name for exactly this protocol. No
+> proprietary device internals are described here; everything in this document
+> is free to implement (see [`../LICENSE`](../LICENSE), CC-BY-4.0).
 
-The **Vibe Protocol** lets a *client* (a browser app, a mobile app, or an LLM/agent) drive motor/vibration patterns on a *server* device (e.g. the Europe Magic Wand "EMW", or a Knob bridge) over Bluetooth Low Energy. It is a compact, datagram-based protocol carried on **two GATT characteristics**. Everything fits in a single characteristic write or notification — no multi-segment reassembly is required at the transport level (though long patterns can be split into multiple datagrams, §11).
+## Overview
+
+The **Strong Vibes Protocol** lets a *client* (a browser app, a mobile app, or an LLM/agent) drive motor/vibration patterns on a *server* device (e.g. the Europe Magic Wand "EMW", or a Knob bridge) over Bluetooth Low Energy. It is a compact, datagram-based protocol carried on **two GATT characteristics**. Everything fits in a single characteristic write or notification — no multi-segment reassembly is required at the transport level (though long patterns can be split into multiple datagrams, §11).
 
 This document is **self-contained**: an AI or developer can read it once and build a working Chrome/Edge Web Bluetooth controller that connects to a Vibe device and runs patterns. It describes only the Vibe Protocol — nothing about how the device works internally.
 
@@ -246,7 +256,7 @@ Datagram (SIZE = 0x15 = 21 bytes = 5 header + 16 segments):
 
 ## 9. Device.Info — Module `0x03`
 
-Read-only telemetry plus one writable settings slot: firmware version, hardware revision, extended serial number, fault counters, lifetime usage, and (where hardware supports it) battery. The client queries; the server replies on 1227. There are no unsolicited Module-`0x03` emissions.
+Read-only telemetry plus one writable settings slot: firmware version, hardware revision, extended serial number, fault counters, and (where the hardware supports them) lifetime usage and battery. The client queries; the server replies on 1227. There are no unsolicited Module-`0x03` emissions.
 
 **Per-slot query:** `[0x10, 0x02, 0x03, SLOT_ID]`
 **Bundle query (all populated slots):** `[0x10, 0x02, 0x03, 0xFF]`
@@ -256,16 +266,18 @@ Read-only telemetry plus one writable settings slot: firmware version, hardware 
 
 | SLOT_ID | Name | Payload (after SCHEMA_VER) | Notes |
 |---|---|---|---|
-| `0x01` | Battery | `[pct][mV_hi][mV_lo][flags]` | absent on hardware without battery sense |
+| `0x01` | Battery | `[pct][mV_hi][mV_lo][flags]` | **optional** — absent on hardware without battery sense; **NA (not populated) on the reference EMW firmware** |
 | `0x02` | Fault | `[active][last][count_hi][count_lo]` | |
-| `0x03` | HW revision | `[pcb][motor][feat_hi][feat_lo][0,0,0,0]` | |
-| `0x04` | Usage | `[toggles:3 BE][runtime_minutes:4 BE]` | |
+| `0x03` | HW revision | `[pcb][motor][feat_hi][feat_lo][0,0,0,0]` | `pcb`/`motor` are nibble-decimal (`0x30`→`3.0`, `0x10`→`1.0`) |
+| `0x04` | Usage | `[toggles:3 BE][runtime_minutes:4 BE]` | **optional** — **NA (not populated) on the reference EMW firmware** |
 | `0x05` | FW version | `[major][minor][patch][build][git:4 BE]` | render `major.minor.patch.build` |
 | `0x06` | Device settings | `[settings_byte]` (bit 0 = a device-specific toggle; bits 1–7 reserved) | **writable** |
 | `0xFE` | Extended SN | `[SN:4 BE]` | bundle / per-slot only |
 | `0xFF` | Bundle marker | query side only; response carries sub-records | |
 
 All multi-byte fields are big-endian. `SCHEMA_VER` is currently `0x01` for every slot.
+
+**Optional slots.** Battery (`0x01`) and Usage (`0x04`) are optional: a device populates them only if it has the corresponding hardware/telemetry. Neither is populated by the reference EMW firmware, so on that hardware they simply never appear in a bundle or per-slot response — this is expected, not an error. A client must treat *any* slot as possibly-absent (drive the UI off the slots that actually arrive) and never require `0x01`/`0x04`.
 
 **Schema evolution (append-only):** the leading `SCHEMA_VER` announces a slot's layout; older clients parse what they understand and **ignore trailing bytes** and **skip unknown sub-slots** (advance `SUB_LEN + 2`). Never reject a slot/bundle just because it is longer or has an unknown slot — future servers add fields and slots.
 
@@ -278,7 +290,7 @@ Echo:  [0x10, 0x04, 0x03, 0x06, 0x01, device_confirmed_byte]   (on 1227)
 
 Compare the echoed byte against your requested value to confirm. Slots `0x01–0x05`, `0xFE` are read-only.
 
-**Pull-on-connect (recommended client behaviour):** wait ≥ 500 ms after enabling notifications (some modules need their notify queue to drain), send the bundle query, retry once after 2 s, then fall back to per-slot pulls (`0x02 → 0x03 → 0x04 → 0x05 → 0xFE`) with ≥ 300 ms gaps. Per-slot is more resilient under a bad link; the bundle is one round-trip but fragments into several notifies.
+**Pull-on-connect (recommended client behaviour):** wait ≥ 500 ms after enabling notifications (some modules need their notify queue to drain), send the bundle query, retry once after 2 s, then fall back to per-slot pulls (`0x02 → 0x03 → 0x05 → 0xFE`) with ≥ 300 ms gaps (skip the optional `0x01`/`0x04` slots on devices that don't populate them — e.g. the reference EMW firmware). Per-slot is more resilient under a bad link; the bundle is one round-trip but fragments into several notifies.
 
 ---
 

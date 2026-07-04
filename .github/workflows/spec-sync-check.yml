@@ -28,7 +28,7 @@ jobs:
       - name: Compare mirror against canonical
         env:
           # Canonical spec in the umbrella repo. Update the path if it moves.
-          CANONICAL_URL: https://raw.githubusercontent.com/amok-products/strong-vibes/main/skills/vibe-protocol-public.md
+          CANONICAL_URL: https://raw.githubusercontent.com/amok-products/strong-vibes/main/protocol/strong-vibes-protocol.md
         run: |
           set -euo pipefail
           echo "Fetching canonical: $CANONICAL_URL"
