@@ -7,7 +7,7 @@ before making changes.
 ## What this project is
 
 **Strong Vibes Playapp by europemagicwand.com** — a React + TypeScript + Vite web
-app that controls Bluetooth Low Energy massager devices from the browser via the
+app that controls BLE massager devices from the browser via the
 **Web Bluetooth API**. It speaks the **Strong Vibes Protocol** (a compact,
 datagram-based BLE GATT protocol). It is a static front-end: no server is
 required; optional Supabase (community sharing) and MCP integrations are off
