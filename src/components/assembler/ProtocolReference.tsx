@@ -83,7 +83,7 @@ export default function ProtocolReference() {
               <div><B color={DGRM_COLOR_MODULE}>MSG</B> = 0x00 (repeating) / 0x01 (non-repeating)</div>
               <div><B color={DGRM_COLOR_TIMBRE}>TIM</B> = 0x00 Linear / 0x01 Sine / 0x02 Gaussian</div>
               <div><B color={DGRM_COLOR_PATTERN_ID}>PID</B> = pattern identifier (1-254 user)</div>
-              <div><B color={DGRM_COLOR_MIC}>MIC</B> = 0-100%, 0xEE=Lock, 0xFF=Unchanged</div>
+              <div><B color={DGRM_COLOR_MIC}>MIC</B> = 0-100% (0xEE/0xFF: see MIC Special Values)</div>
             </div>
           </Section>
 
@@ -153,14 +153,18 @@ export default function ProtocolReference() {
           </Section>
 
           <Section title="MIC Special Values">
+            <p className="text-[11px] mb-2">
+              Defined by the protocol but <em>not supported</em> by the reference firmware. This app never sends
+              them and clamps every MIC it sends to 0-100.
+            </p>
             <div className="grid grid-cols-2 gap-2 text-[11px]">
               <div className="panel-inset p-2">
-                <B color={DGRM_COLOR_MIC}>0xEE (238)</B> = Lock at 100%
-                <p className="text-[10px] text-surface-400 mt-0.5">Forces maximum output regardless of pattern</p>
+                <B color={DGRM_COLOR_MIC}>0xEE (238)</B> = "Lock at 100%" in the protocol
+                <p className="text-[10px] text-surface-400 mt-0.5">Not supported by the reference firmware; never sent by this app</p>
               </div>
               <div className="panel-inset p-2">
-                <B color={DGRM_COLOR_MIC}>0xFF (255)</B> = Unchanged
-                <p className="text-[10px] text-surface-400 mt-0.5">Keeps current MIC when sending new pattern</p>
+                <B color={DGRM_COLOR_MIC}>0xFF (255)</B> = "Unchanged" in the protocol
+                <p className="text-[10px] text-surface-400 mt-0.5">Not supported by the reference firmware; never sent by this app</p>
               </div>
             </div>
           </Section>

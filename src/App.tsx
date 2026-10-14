@@ -10,7 +10,7 @@ import {
   parseReadFifoNotification,
 } from './ble/vibeTransport';
 import type { TrafficLogEntry, AnomalyLogEntry, MotorStateInfo } from './ble/vibeTransport';
-import { buildMicAdjust, buildControlReset } from './protocol/vibe-datagram';
+import { buildMicAdjust, buildControlReset, prepareOutgoingDatagram, toHex } from './protocol/vibe-datagram';
 import {
   buildClassicModeDefaultWrite,
   buildDeviceInfoBundleQuery,
@@ -28,6 +28,7 @@ import { VibeFifoReassembler } from './protocol/vibe-fifo-reassembler';
 import { useTheme } from './hooks/useTheme';
 import { useDeviceManager } from './hooks/useDeviceManager';
 import { registerEmergencyStop } from './lib/emergencyStop';
+import { loadInitialPower, savePower } from './lib/powerPreference';
 import ConnectionPanel from './components/ConnectionPanel';
 import SafetyNotice from './components/SafetyNotice';
 import TabNavigation from './components/TabNavigation';
@@ -75,8 +76,10 @@ function App() {
   const deviceStatesRef = useRef<Map<string, DeviceState>>(new Map());
   const [, forceRender] = useState(0);
 
-  // Shared MIC state — synchronized across all tabs
-  const [globalMic, setGlobalMic] = useState(100);
+  // Shared MIC state — synchronized across all tabs. Starts low and restores the
+  // last used value, capped so a fresh load never starts at high power.
+  const [globalMic, setGlobalMic] = useState(loadInitialPower);
+  useEffect(() => { savePower(globalMic); }, [globalMic]);
 
   // Shared playing state — synchronized across Play and Designer tabs
   const [globalIsPlaying, setGlobalIsPlaying] = useState(false);
@@ -291,8 +294,17 @@ function App() {
     const slotId = dm.activeSlotId;
     if (!slotId) return;
     const source = activeTabRef.current;
-    await dm.writeChar(slotId, VIBE_UUIDS.service, VIBE_UUIDS.writeBufferSegment, data);
-    addTraffic(slotId, createTrafficEntry('send', VIBE_UUIDS.writeBufferSegment, data, undefined, source));
+    // Every datagram the tabs send passes through here. Refuse anything that is
+    // not exactly one complete Vibe datagram and cap its MIC at 100, so no UI
+    // path (including the Assembler's Raw Hex panel) can put a MIC above 100 on
+    // the wire. The traffic log shows the bytes actually written.
+    const safe = prepareOutgoingDatagram(data);
+    if (!safe) {
+      console.warn('Blocked device write (not a single complete Vibe datagram):', toHex(data));
+      return;
+    }
+    await dm.writeChar(slotId, VIBE_UUIDS.service, VIBE_UUIDS.writeBufferSegment, safe);
+    addTraffic(slotId, createTrafficEntry('send', VIBE_UUIDS.writeBufferSegment, safe, undefined, source));
   }, [dm, addTraffic]);
 
   // Log inter-chunk gap timing to BLE Traffic (for firmware hold calibration)
@@ -537,7 +549,6 @@ function App() {
             trafficLog={activeDeviceState?.trafficLog ?? []}
             readFifoLog={activeDeviceState?.readFifoLog ?? []}
             onSendDatagram={handleSendDatagram}
-            onSendCommand={handleSendDatagram}
             onRefreshDeviceInfo={handleRefreshDeviceInfo}
             onWriteClassicModeDefault={handleWriteClassicModeDefault}
             onDismissSettingsError={handleDismissSettingsError}

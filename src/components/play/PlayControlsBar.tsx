@@ -5,7 +5,8 @@ import { Play, Square, RotateCcw, Activity } from 'lucide-react';
 import HelpTooltip from '../shared/HelpTooltip';
 import RangeSlider from '../designer/RangeSlider';
 import type { MotorStateInfo } from '../../ble/vibeTransport';
-import { MOTOR_STATE_IDLE, MOTOR_STATE_ERROR, MIC_LOCK_100, MIC_UNCHANGED } from '../../protocol/vibe-datagram';
+import { MOTOR_STATE_IDLE, MOTOR_STATE_ERROR } from '../../protocol/vibe-datagram';
+import { DEVICE_LEVELS, micToDeviceLevel } from '../../lib/deviceLevels';
 
 interface PlayControlsBarProps {
   mic: number;
@@ -32,15 +33,6 @@ interface PlayControlsBarProps {
   onPatternIdChange?: (id: number) => void;
 }
 
-const DEVICE_LEVELS = [
-  { level: 1, mic: 1 },
-  { level: 2, mic: 20 },
-  { level: 3, mic: 40 },
-  { level: 4, mic: 60 },
-  { level: 5, mic: 80 },
-  { level: 6, mic: 100 },
-];
-
 const HELP_INTENSITY = `Controls the overall output strength sent to the device.
 
 Higher values = stronger vibration. This scales all pattern intensities proportionally.`;
@@ -61,17 +53,6 @@ const STATE_DOT: Record<number, string> = {
   2: 'bg-accent-500 animate-pulse',
   [MOTOR_STATE_ERROR]: 'bg-danger-500',
 };
-
-function micToDeviceLevel(mic: number): string {
-  if (mic === MIC_LOCK_100) return 'LOCK';
-  if (mic === MIC_UNCHANGED) return '—';
-  if (mic === 0) return 'Off';
-  let closest = DEVICE_LEVELS[0];
-  for (const dl of DEVICE_LEVELS) {
-    if (Math.abs(dl.mic - mic) < Math.abs(closest.mic - mic)) closest = dl;
-  }
-  return `Level ${closest.level}`;
-}
 
 export default function PlayControlsBar({
   mic, onMicChange,

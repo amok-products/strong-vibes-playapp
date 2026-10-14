@@ -5,7 +5,7 @@ import { useState, useCallback, useRef, useMemo } from 'react';
 import { Copy, Check, RotateCcw, ChevronDown, ChevronRight, Send } from 'lucide-react';
 import type { TrafficLogEntry, AnomalyLogEntry } from '../../ble/vibeTransport';
 import type { PatternState } from './PatternBuilder';
-import { toHex, hexToBytes, buildQueryStatus } from '../../protocol/vibe-datagram';
+import { toHex, hexToBytes, prepareOutgoingDatagram } from '../../protocol/vibe-datagram';
 import type { DeviceInfoSnapshot, SettingsWriteState } from '../../protocol/vibe-device-info';
 import PatternBuilder from './PatternBuilder';
 import { createSavedPattern } from './SavedPatterns';
@@ -26,7 +26,6 @@ interface AssemblerTabProps {
   trafficLog: TrafficLogEntry[];
   readFifoLog: AnomalyLogEntry[];
   onSendDatagram: (data: Uint8Array) => void;
-  onSendCommand: (data: Uint8Array) => void;
   onRefreshDeviceInfo: () => void;
   onWriteClassicModeDefault: (enabled: boolean) => void;
   onDismissSettingsError: () => void;
@@ -39,6 +38,8 @@ const HELP_RAW_HEX = `Raw hexadecimal datagram display showing the exact bytes t
 Hover over individual bytes to see their role (VER, SIZE, module, message, timbre, pattern ID, MIC, segment data).
 
 You can paste a hex string below to decode and visualize an existing datagram.`;
+
+const RAW_HEX_NOT_SENDABLE = 'Only one complete Vibe datagram can be sent: it must start with 10, and the SIZE byte must equal the number of bytes after it (at most 119).';
 
 const HELP_READ_FIFO = `Anomalous data received on characteristic 1227 (Read Buffer Segment).
 
@@ -56,7 +57,6 @@ export default function AssemblerTab({
   trafficLog,
   readFifoLog,
   onSendDatagram,
-  onSendCommand,
   onRefreshDeviceInfo,
   onWriteClassicModeDefault,
   onDismissSettingsError,
@@ -127,14 +127,19 @@ export default function AssemblerTab({
     });
   }, []);
 
+  // Only exactly one complete Vibe datagram can be sent, with its MIC capped at
+  // 100 (prepareOutgoingDatagram). Other byte sequences, including non-Vibe
+  // first bytes, can still be decoded below but are never written.
+  const rawHexOutgoing = useMemo(
+    () => (rawHexBytes ? prepareOutgoingDatagram(rawHexBytes) : null),
+    [rawHexBytes],
+  );
+  const rawHexMicCapped = rawHexOutgoing !== null && rawHexOutgoing !== rawHexBytes;
+
   const sendRawHex = useCallback(() => {
-    if (!rawHexBytes || rawHexBytes.length === 0) return;
-    if (rawHexBytes[0] === 0x10) {
-      onSendDatagram(rawHexBytes);
-    } else {
-      onSendCommand(rawHexBytes);
-    }
-  }, [rawHexBytes, onSendDatagram, onSendCommand]);
+    if (!rawHexOutgoing) return;
+    onSendDatagram(rawHexOutgoing);
+  }, [rawHexOutgoing, onSendDatagram]);
 
   return (
     <div className="space-y-4 p-4 max-w-5xl mx-auto">
@@ -180,7 +185,6 @@ export default function AssemblerTab({
         settingsWrite={settingsWrite}
         connected={connected}
         onRefresh={onRefreshDeviceInfo}
-        onQueryStatus={() => onSendCommand(buildQueryStatus())}
         onWriteClassicModeDefault={onWriteClassicModeDefault}
         onDismissSettingsError={onDismissSettingsError}
       />
@@ -216,9 +220,9 @@ export default function AssemblerTab({
               />
               <button
                 onClick={sendRawHex}
-                disabled={!connected || !rawHexBytes}
+                disabled={!connected || !rawHexOutgoing}
                 className="btn-primary btn-sm"
-                title={!connected ? 'Not connected' : !rawHexBytes ? 'Enter valid hex' : rawHexBytes[0] === 0x10 ? 'Send as datagram (1225)' : 'Send as raw opcode (1225)'}
+                title={!connected ? 'Not connected' : !rawHexBytes ? 'Enter valid hex' : !rawHexOutgoing ? RAW_HEX_NOT_SENDABLE : 'Send as datagram (1225)'}
               >
                 <Send className="w-3 h-3" />
                 <span className="ml-1">Send</span>
@@ -227,10 +231,16 @@ export default function AssemblerTab({
             {rawHexBytes && (
               <div className="mono-display mt-2">
                 <div className="text-[10px] text-surface-400 mb-1">
-                  Decoded ({rawHexBytes.length} bytes) — {rawHexBytes[0] === 0x10 ? 'datagram' : 'raw opcode'}
+                  Decoded ({rawHexBytes.length} bytes) — {rawHexOutgoing ? 'datagram' : 'not sendable'}
                 </div>
                 <ColoredDatagram data={rawHexBytes} />
               </div>
+            )}
+            {rawHexBytes && !rawHexOutgoing && (
+              <p className="text-xs text-danger-500 mt-1">{RAW_HEX_NOT_SENDABLE}</p>
+            )}
+            {rawHexMicCapped && (
+              <p className="text-xs text-surface-400 mt-1">MIC above 100 will be sent as 100 (0x64).</p>
             )}
             {rawHexInput.trim() && !rawHexBytes && (
               <p className="text-xs text-danger-500 mt-1">Invalid hex string</p>
@@ -275,6 +285,7 @@ const ALL_STORAGE_KEYS = [
   'sv-designer-instruction-dismissed',
   'sv-community-consent',
   'sv-theme',
+  'sv-power',
 ];
 
 function TroubleshootingSection() {

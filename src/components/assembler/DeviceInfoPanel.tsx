@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 AMOK / Europe Magic Wand
 
-import { Cpu, RefreshCw, Activity, AlertTriangle, X } from 'lucide-react';
+import { Cpu, RefreshCw, AlertTriangle, X } from 'lucide-react';
 import type { DeviceInfoSnapshot, SettingsWriteState } from '../../protocol/vibe-device-info';
 import { formatExtSn, formatFwVersion, formatHwRev } from '../../protocol/vibe-device-info';
 import HelpTooltip from './HelpTooltip';
@@ -12,7 +12,6 @@ interface DeviceInfoPanelProps {
   settingsWrite: SettingsWriteState | null;
   connected: boolean;
   onRefresh: () => void;
-  onQueryStatus: () => void;
   onWriteClassicModeDefault: (enabled: boolean) => void;
   onDismissSettingsError: () => void;
 }
@@ -42,7 +41,6 @@ export default function DeviceInfoPanel({
   settingsWrite,
   connected,
   onRefresh,
-  onQueryStatus,
   onWriteClassicModeDefault,
   onDismissSettingsError,
 }: DeviceInfoPanelProps) {
@@ -77,15 +75,6 @@ export default function DeviceInfoPanel({
           Device Info
           <HelpTooltip content={HELP_DEVICE_INFO} />
         </span>
-        <button
-          onClick={onQueryStatus}
-          disabled={!connected}
-          className="btn-ghost btn-sm"
-          title={connected ? 'Query motor status (Control.QueryStatus)' : 'Connect a device first'}
-        >
-          <Activity className="w-3 h-3" />
-          <span className="ml-1">Query Status</span>
-        </button>
         <button
           onClick={onRefresh}
           disabled={!connected}

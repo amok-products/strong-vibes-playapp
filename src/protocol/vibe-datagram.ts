@@ -32,9 +32,12 @@ export const TIMBRE_LABELS: Record<number, string> = {
 };
 
 export const OPCODE_SYNC_PATTERN = 0x0a;
-export const OPCODE_QUERY_STATUS = 0x0b;
 export const OPCODE_ERROR = 0xff;
 
+// Protocol MIC sentinels ("lock at 100%" / "unchanged"). DISPLAY ONLY: they are
+// used to label bytes the app receives or decodes. The reference firmware does
+// not support either meaning, so the app never puts them on the wire (see
+// clampMic and prepareOutgoingDatagram below).
 export const MIC_LOCK_100 = 0xee;
 export const MIC_UNCHANGED = 0xff;
 
@@ -61,8 +64,8 @@ export const MOTOR_ERROR_LABELS: Record<number, string> = {
 // patterns, pasted patterns, AI/MCP tool calls, gamepad/MIDI/knob input — is
 // bounded to the device's safe range by construction, regardless of whether an
 // individual caller remembered to pre-clamp. Do NOT replace these with a bare
-// `& 0xff` mask: masking wraps out-of-range values (e.g. 300 → 44, and 238 →
-// 0xEE which the protocol reads as "lock at 100%") instead of rejecting them.
+// `& 0xff` mask: masking wraps out-of-range values (e.g. 300 → 44, or 238 →
+// 0xEE) instead of rejecting them.
 export const MIN_INTENSITY = 0;
 export const MAX_INTENSITY = 100;
 export const MIN_PERIOD_MS = 100; // device minimum segment period
@@ -87,15 +90,56 @@ export function clampByte(v: number): number {
 }
 
 /**
- * Clamp a MIC value for a MIC-adjust write or a pattern header. Preserves the
- * two protocol sentinels (0xEE = lock at 100%, 0xFF = unchanged) so the
- * Assembler's advanced controls keep working; every other value is clamped to
- * 0–100 so an out-of-range or NaN input can never be reinterpreted as a
- * lock/unchanged command or drive the motor past 100%.
+ * Clamp a MIC value for a MIC-adjust write or a pattern header to 0–100,
+ * unconditionally. The 0xEE/0xFF sentinels are NOT passed through: the
+ * reference firmware does not support them, and the app never sends a MIC
+ * above 100. Non-finite (NaN) → 0.
  */
 export function clampMic(v: number): number {
-  if (v === MIC_LOCK_100 || v === MIC_UNCHANGED) return v;
   return clampIntensity(v);
+}
+
+/**
+ * True when `data` is exactly one complete Vibe 1.0 datagram: VER 0x10, a SIZE
+ * of at most MAX_PAYLOAD, and exactly SIZE payload bytes after the header.
+ */
+export function isSingleVibeDatagram(data: Uint8Array): boolean {
+  return data.length >= 2
+    && data[0] === VIBE_VER_1_0
+    && data[1] <= MAX_PAYLOAD
+    && data.length === data[1] + 2;
+}
+
+/**
+ * Final check on bytes about to be written to the device's Vibe write
+ * characteristic. Returns null unless `data` is exactly one complete Vibe
+ * datagram (see isSingleVibeDatagram) with at least a module and a message
+ * byte: anything else is refused rather than parsed, because this check cannot
+ * know how the device would frame it. Motor messages are accepted only as a
+ * pattern (SIZE ≥ 5) or a Motor.MIC write (SIZE exactly 3), so the MIC byte is
+ * always inside the datagram itself; any other Motor message is refused.
+ * Returns the datagram with that MIC byte capped at 100: `data` itself when
+ * already in range, else a capped copy. `data` is never modified.
+ *
+ * The datagram builders already produce such datagrams with clampMic applied;
+ * this backstop covers raw input (the Assembler's Raw Hex panel), so no UI path
+ * can put a MIC above 100 on the wire.
+ */
+export function prepareOutgoingDatagram(data: Uint8Array): Uint8Array | null {
+  if (!isSingleVibeDatagram(data)) return null;
+  const size = data[1];
+  if (size < 2) return null;                       // no module/message bytes
+  let micIdx = -1;
+  if (data[2] === MODULE_MOTOR) {
+    const msg = data[3];
+    if ((msg === MSG_MOTOR_REPEATING || msg === MSG_MOTOR_NON_REPEATING) && size >= 5) micIdx = 6;
+    else if (msg === MSG_MOTOR_MIC && size === 3) micIdx = 4;
+    else return null;                              // other Motor message, or no MIC byte
+  }
+  if (micIdx < 0 || data[micIdx] <= MAX_INTENSITY) return data;
+  const out = data.slice();
+  out[micIdx] = MAX_INTENSITY;
+  return out;
 }
 
 function wrapDatagram(payload: number[]): Uint8Array {
@@ -240,10 +284,6 @@ export function buildGaussianNonRepeatingPattern(
     );
   }
   return wrapDatagram(payload);
-}
-
-export function buildQueryStatus(): Uint8Array {
-  return new Uint8Array([OPCODE_QUERY_STATUS]);
 }
 
 export interface ParsedDatagram {

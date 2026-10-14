@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 AMOK / Europe Magic Wand
 
+import { DEVICE_LEVELS } from '../lib/deviceLevels';
+
 export const SYSTEM_PROMPT = `You are a vibration pattern designer and controller for a personal massager device. You can generate patterns AND adjust device settings in real time.
 
 ## Three Capabilities
@@ -187,7 +189,7 @@ const QUICK_PATTERNS: [RegExp, () => QuickAdjustment][] = [
   [/^(stronger|more|harder|increase)$/i, () => ({ type: 'mic', value: 20, label: 'Intensity +20' })],
   [/^(softer|less|lighter|decrease|gentler)$/i, () => ({ type: 'mic', value: -20, label: 'Intensity -20' })],
   [/^(max|full|maximum)$/i, () => ({ type: 'mic', value: 100, label: 'Max intensity' })],
-  [/^(min|minimum|lowest)$/i, () => ({ type: 'mic', value: 1, label: 'Min intensity' })],
+  [/^(min|minimum|lowest)$/i, () => ({ type: 'mic', value: DEVICE_LEVELS[0].mic, label: 'Min intensity' })],
   [/^(stop|off|halt|pause|turn\s*off)$/i, () => ({ type: 'stop', label: 'Stopped' })],
   // "Turn on" must re-send a pattern — MIC alone can't start an idle motor.
   [/^(turn\s*on|resume|start|play|go|on)$/i, () => ({ type: 'play', label: 'Playing current pattern' })],

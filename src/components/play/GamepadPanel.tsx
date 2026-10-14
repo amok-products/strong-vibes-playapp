@@ -6,8 +6,8 @@ import { Gamepad2 } from 'lucide-react';
 import { isGamepadSupported, getConnectedGamepads, startGamepadPolling } from '../../devices/gamepadController';
 import type { GamepadInfo, GamepadState } from '../../devices/gamepadController';
 import { MIN_PERIOD_MS } from '../../protocol/vibe-datagram';
+import { levelAbove, levelBelow } from '../../lib/deviceLevels';
 
-const MIC_LEVELS = [1, 20, 40, 60, 80, 100]; // L1-L6
 const SPEED_STEPS = [0.2, 0.4, 0.6, 0.8, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0];
 
 interface GamepadPanelProps {
@@ -88,19 +88,15 @@ export default function GamepadPanel({ mic, speed, isPlaying, minSegmentPeriodMs
 
     // D-pad Up or L1 bumper → cycle MIC level up (edge)
     if ((gs.dpadUp && !prev.dpadUp) || (gs.bumperL && !prev.bumperL)) {
-      const currentMic = micRef.current;
-      const currentIdx = MIC_LEVELS.findIndex(l => l >= currentMic);
-      const nextIdx = Math.min(MIC_LEVELS.length - 1, (currentIdx === -1 ? 0 : currentIdx) + 1);
-      onMicChangeRef.current(MIC_LEVELS[nextIdx]);
+      const up = levelAbove(micRef.current);   // next device stop (L1-L6)
+      if (up !== null) onMicChangeRef.current(up);
     }
 
     // D-pad Down or L2 trigger → cycle MIC level down (edge)
     const l2Pressed = gs.leftTrigger > 0.5;
     if ((gs.dpadDown && !prev.dpadDown) || (l2Pressed && !prev.leftTrigger)) {
-      const currentMic = micRef.current;
-      const currentIdx = MIC_LEVELS.findIndex(l => l >= currentMic);
-      const nextIdx = Math.max(0, (currentIdx === -1 ? MIC_LEVELS.length - 1 : currentIdx) - 1);
-      onMicChangeRef.current(MIC_LEVELS[nextIdx]);
+      const down = levelBelow(micRef.current); // previous stop; never raises power
+      if (down !== null) onMicChangeRef.current(down);
     }
 
     // D-pad Right → speed step up (edge, with minimum period guard)

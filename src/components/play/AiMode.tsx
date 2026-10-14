@@ -15,6 +15,7 @@ import { sendChatCompletion } from '../../ai/aiClient';
 import { detectQuickAdjustment } from '../../ai/aiPatternSkill';
 import type { LinearSegment } from '../../protocol/vibe-datagram';
 import { clampIntensity, clampPeriod } from '../../protocol/vibe-datagram';
+import { DEVICE_LEVELS } from '../../lib/deviceLevels';
 
 interface AiModeProps {
   connected: boolean;
@@ -92,7 +93,7 @@ export default function AiMode({
           label = `Playing "${latestPattern.patternName}"`;
         }
       } else if (quick.type === 'mic') {
-        if (quick.value === 100 || quick.value === 1) {
+        if (quick.value === 100 || quick.value === DEVICE_LEVELS[0].mic) {   // absolute max / min
           onAdjustMic(quick.value);
         } else {
           onAdjustMic(Math.max(0, Math.min(100, mic + (quick.value ?? 0))));

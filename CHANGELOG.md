@@ -5,6 +5,40 @@ All notable changes to Strong Vibes Playapp are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project aims to follow [Semantic Versioning](https://semver.org/).
 
+## [2.15.0] - 2026-10-13
+
+Intensity (MIC) safety fixes. These change what the app sends to the device.
+
+### Fixed
+- **No MIC above 100 is ever sent.** `clampMic()` now clamps every MIC to
+  0–100. The protocol's 0xEE ("lock") and 0xFF ("unchanged") values are no
+  longer passed through, because the reference firmware does not support
+  them. The Assembler's "Lock 100%" button is now "Send 100%" (sends MIC
+  100), and its "0xFF" button is removed.
+- **Datagram writes are validated.** The send path every tab uses now writes
+  only exactly one complete Vibe datagram (VER 0x10, SIZE ≤ 119, length =
+  SIZE + 2), with its MIC capped at 100, and refuses anything else, including
+  Motor messages too short to carry their MIC byte. The
+  Assembler's Raw Hex panel can still decode any hex, but it only sends what
+  passes that check; its separate raw-opcode (non-0x10) send path is removed.
+- **Power no longer starts at 100%.** The shared Power control starts at the
+  device's Level 2 stop (MIC 19) for first-time users, and otherwise restores
+  the last used value capped at 50 on every fresh load (stored as `sv-power`,
+  which "Reset All Settings" also clears).
+- **Level buttons match the device.** L1–L6 now send MIC 2/19/37/54/79/100,
+  the device's own six button stops. The old L1 sent MIC 1, which produces
+  no output on the device. A reported MIC of 0 or 1 now reads "Off". The Play
+  and Designer tabs, the gamepad level up/down and the AI "min" quick command
+  share one level table; the gamepad now steps to the adjacent stop, and
+  "down" never raises power.
+- **"Query Status" removed** from the Device Info panel. It wrote the raw
+  first byte 0x0B, which is reserved and not implemented by the reference
+  firmware; the Device Info panel already reports device status.
+
+### Changed
+- The MIC help text and the Protocol Reference now note that 0xEE/0xFF are
+  not implemented by the reference firmware and are never sent by the app.
+
 ## [2.14.3] - 2026-07-04
 
 Doc/CI pre-launch fixes (no app behavior changed).

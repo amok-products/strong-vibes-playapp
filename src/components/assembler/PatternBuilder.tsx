@@ -9,8 +9,7 @@ import {
   buildSineRepeatingPattern, buildSineNonRepeatingPattern,
   buildGaussianRepeatingPattern, buildGaussianNonRepeatingPattern,
   buildControlReset, buildMicAdjust,
-  toHex,
-  MIC_LOCK_100, MIC_UNCHANGED,
+  toHex, clampMic,
   MAX_LINEAR_SEGMENTS, MAX_GAUSSIAN_SEGMENTS, MIN_PERIOD_MS,
 } from '../../protocol/vibe-datagram';
 import type { LinearSegment, SineParams, GaussianParams } from '../../protocol/vibe-datagram';
@@ -45,9 +44,7 @@ const MIC_PRESETS = [0, 25, 50, 75, 100];
 
 const HELP_MIC = `Main Intensity Control scales motor output from 0% (off) to 100% (full power).
 
-Special values:
-- Lock (0xEE): Forces maximum output regardless of pattern settings.
-- Unchanged (0xFF): Keeps the current MIC level when sending a new pattern.
+The app only ever sends MIC values 0-100. The protocol's 0xEE ("lock") and 0xFF ("unchanged") values are not supported by the reference firmware, so the app never sends them.
 
 Sending MIC separately adjusts the intensity without changing the active pattern.`;
 
@@ -173,14 +170,14 @@ export default function PatternBuilder({ onSendDatagram, onSavePattern, onDatagr
     if (!loadedPattern) return;
     setTimbre(loadedPattern.timbre);
     setPatternId(loadedPattern.patternId);
-    setMic(loadedPattern.mic);
+    setMic(clampMic(loadedPattern.mic));
     setIsRepeating(loadedPattern.isRepeating);
     setLinearSegments(loadedPattern.linearSegments);
     setSineParams(loadedPattern.sineParams);
     setGaussianSegments(loadedPattern.gaussianSegments);
   }, [loadedPattern]);
 
-  const micDisplay = mic === MIC_LOCK_100 ? 'Lock' : mic === MIC_UNCHANGED ? 'Unch' : `${mic}%`;
+  const micDisplay = `${mic}%`;
   const micHex = `0x${mic.toString(16).padStart(2, '0').toUpperCase()}`;
 
   return (
@@ -318,8 +315,8 @@ export default function PatternBuilder({ onSendDatagram, onSavePattern, onDatagr
 
       {/* Consolidated control section — mirrors the Designer's control bar
           (panel + flex-wrap columns + grouped action buttons). Rendered below the
-          preview per the #34 order. Query Status was moved to the Device Info
-          header; Auto-query was removed. MIC/Send/Reset bytes on 1225 are unchanged. */}
+          preview per the #34 order. Query Status (a reserved raw opcode) and
+          Auto-query were removed. MIC/Send/Reset bytes on 1225 are unchanged. */}
       <div className="panel p-3 space-y-3">
         <div className="flex flex-wrap items-start gap-4">
           {/* MIC — the Assembler's authoritative intensity control */}
@@ -352,12 +349,9 @@ export default function PatternBuilder({ onSendDatagram, onSavePattern, onDatagr
               <div className="w-px h-4 bg-surface-300 dark:bg-surface-600 mx-0.5" />
               <button onClick={() => onSendDatagram(buildMicAdjust(mic))} disabled={disabled}
                 className="btn-primary btn-sm text-[11px]">Send MIC</button>
-              <button onClick={() => { setMic(MIC_LOCK_100); onSendDatagram(buildMicAdjust(MIC_LOCK_100)); }}
+              <button onClick={() => { setMic(100); onSendDatagram(buildMicAdjust(100)); }}
                 disabled={disabled}
-                className="btn-secondary btn-sm text-[11px] font-mono">Lock 100%</button>
-              <button onClick={() => { setMic(MIC_UNCHANGED); onSendDatagram(buildMicAdjust(MIC_UNCHANGED)); }}
-                disabled={disabled}
-                className="btn-secondary btn-sm text-[11px] font-mono">0xFF</button>
+                className="btn-secondary btn-sm text-[11px] font-mono">Send 100%</button>
             </div>
           </div>
 
