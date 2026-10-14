@@ -219,6 +219,10 @@ function App() {
     });
   }, [cancelDeviceInfoPull, sendDeviceInfoQuery]);
 
+  // Re-run the notification wiring only when the set of slots or their states
+  // changes (see the dependency note at the end of the effect).
+  const slotStatesKey = dm.slots.map(s => `${s.id}:${s.state}`).join(',');
+
   useEffect(() => {
     for (const slot of dm.slots) {
       if (slot.state !== BleState.Ready) continue;
@@ -267,7 +271,15 @@ function App() {
       };
       setupSubs();
     }
-  }, [dm.slots.map(s => `${s.id}:${s.state}`).join(',')]);
+    // Intentionally keyed on slotStatesKey only. `dm` is a new object on every
+    // render (its methods are stable useCallbacks), so listing it, or the
+    // callbacks derived from it, would re-run this effect on every render and
+    // re-register each Ready slot's notification listener. The callbacks this
+    // effect uses are stable except startDeviceInfoPull, whose identity changes
+    // only because it closes over `dm` (via sendDeviceInfoQuery); it uses only
+    // stable `dm` methods, so a captured copy behaves identically to a fresh one.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slotStatesKey]);
 
   useEffect(() => {
     const activeIds = new Set(dm.slots.map(s => s.id));
@@ -468,6 +480,11 @@ function App() {
     if (ms.mic > 0 && ms.mic <= 100) {   // Skip mic=0 and special values (0xEE, 0xFF)
       setGlobalMic(ms.mic);
     }
+    // Intentionally keyed on the MIC/state values, not the motorState object:
+    // every Motor.State notification creates a new object, so depending on it
+    // would re-run this sync on every notification, even when neither the MIC
+    // nor the state changed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeDeviceState?.motorState?.mic, activeDeviceState?.motorState?.state, dm.activeSlotId]);
 
   // Register a best-effort emergency stop for the top-level ErrorBoundary to

@@ -1,7 +1,7 @@
 {
   "name": "strong-vibes-playapp",
   "private": true,
-  "version": "2.14.3",
+  "version": "2.14.4",
   "type": "module",
   "description": "Strong Vibes Playapp — a Chrome/Edge browser controller for BLE massager devices, speaking the Strong Vibes Protocol.",
   "author": "AMOK / Europe Magic Wand",
