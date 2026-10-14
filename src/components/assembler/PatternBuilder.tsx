@@ -17,7 +17,7 @@ import type { LinearSegment, SineParams, GaussianParams } from '../../protocol/v
 import { formatTimeSeconds } from '../../ble/waveformUtils';
 import WaveformCanvas from './WaveformCanvas';
 import HelpTooltip from './HelpTooltip';
-import type { SavedPattern } from './SavedPatterns';
+import { DEFAULT_LINEAR, DEFAULT_SINE, DEFAULT_GAUSSIAN } from './patternState';
 
 export interface PatternState {
   timbre: number;
@@ -36,10 +36,6 @@ interface PatternBuilderProps {
   loadedPattern: PatternState | null;
   disabled: boolean;
 }
-
-const DEFAULT_LINEAR: LinearSegment = { intensityBegin: 0, intensityEnd: 100, periodMs: 1000 };
-const DEFAULT_SINE: SineParams = { amplitude: 50, center: 50, periodMs: 2000 };
-const DEFAULT_GAUSSIAN: GaussianParams = { startPoint: 0, endPoint: 100, durationMs: 1000, steep: 10 };
 
 const MIC_PRESETS = [0, 25, 50, 75, 100];
 
@@ -74,19 +70,6 @@ Key interaction rules:
 2. Non-repeating interrupts, then repeating resumes
 3. Cannot send non-repeating during another non-repeating
 4. Control.Reset stops all motor activity`;
-
-export function loadPatternState(pattern: SavedPattern): PatternState {
-  const data = pattern.pattern_data;
-  return {
-    timbre: pattern.timbre_type,
-    patternId: pattern.pattern_id,
-    mic: pattern.mic,
-    isRepeating: pattern.is_repeating,
-    linearSegments: data.linearSegments ?? [{ ...DEFAULT_LINEAR }],
-    sineParams: data.sineParams ?? { ...DEFAULT_SINE },
-    gaussianSegments: data.gaussianSegments ?? [{ ...DEFAULT_GAUSSIAN }],
-  };
-}
 
 export default function PatternBuilder({ onSendDatagram, onSavePattern, onDatagramBuilt, loadedPattern, disabled }: PatternBuilderProps) {
   const [timbre, setTimbre] = useState(TIMBRE_LINEAR);

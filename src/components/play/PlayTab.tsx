@@ -4,7 +4,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { ListMusic, Bot, Disc3, Plug, AlertCircle } from 'lucide-react';
 import PlayerMode from './PlayerMode';
-import { addToRecent } from './PlayerMode';
+import { addToRecent } from './recentPatterns';
 import NowPlaying from './NowPlaying';
 import PlayControlsBar from './PlayControlsBar';
 import AiMode from './AiMode';

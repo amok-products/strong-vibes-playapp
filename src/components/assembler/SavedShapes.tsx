@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ChevronDown, ChevronRight, Trash2, Upload, Send } from 'lucide-react';
 import { buildLinearRepeatingPattern } from '../../protocol/vibe-datagram';
 import type { PatternState } from './PatternBuilder';
-import { loadPatternState } from './PatternBuilder';
+import { loadPatternState } from './patternState';
 import type { SavedPattern } from './SavedPatterns';
 import {
   loadDesignerParts, saveDesignerParts, splitIntoChunks, formatTimeSeconds, MAX_LINEAR_SEGMENTS,

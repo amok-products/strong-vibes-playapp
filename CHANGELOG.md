@@ -5,6 +5,43 @@ All notable changes to Strong Vibes Playapp are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project aims to follow [Semantic Versioning](https://semver.org/).
 
+## [2.14.4] - 2026-10-13
+
+Dependency hygiene and lint cleanup (no app or device behavior changed).
+
+### Security
+- **`npm audit fix`** (non-breaking) — a fresh install reported 24 advisories
+  (2 low, 4 moderate, 18 high), all in dev-only build tooling; the runtime
+  dependencies in the shipped bundle had none. The non-breaking fix clears 15
+  of them. It also lifts `typescript-eslint` to 8.71, which removes the
+  "TypeScript 5.6.3 not officially supported" lint banner.
+- **Vite 5 → 8** (with `@vitejs/plugin-react` 4 → 6) — clears the Vite and
+  esbuild dev-server advisories (9 → 7). `build.target` is pinned to Vite 5's
+  former default, so the supported browser range does not change, and the
+  production build renders an identical page. `engines.node` now matches Vite
+  8's requirement (`^20.19.0 || >=22.12.0`); CI's Node 20 line satisfies it.
+- **Tailwind CSS 3 → 4: deferred.** The 7 remaining advisories (`braces`,
+  `chokidar`, `fast-glob`, `micromatch`, `postcss-nested`,
+  `postcss-selector-parser`, `tailwindcss`) all sit inside Tailwind 3's
+  build-time tooling. The official v4 upgrade tool rewrites 17 component
+  files, `index.css` and the PostCSS config, and replaces `tailwind.config.js`
+  with CSS-based configuration; v4 also changes several default styles. That
+  needs a visual review across the whole UI, so it is left for a separate
+  migration rather than folded in here.
+
+### Changed
+- **Lint is clean (0 warnings).** The two `react-hooks/exhaustive-deps`
+  exceptions in `src/App.tsx` are now documented in place instead of "fixed" by
+  adding dependencies: the BLE notification wiring intentionally re-runs only
+  when the slot ids/states change (the device manager object is new on every
+  render), and the device-MIC sync intentionally keys on the MIC/state values
+  rather than the per-notification object. The wiring effect's key is
+  extracted to a variable; its value and behavior are unchanged.
+- **Fast Refresh boundaries** — `loadPatternState` and the pattern-builder
+  defaults moved to `src/components/assembler/patternState.ts`, and the Play
+  tab's recent-pattern history to `src/components/play/recentPatterns.ts`, so
+  those component files export only components.
+
 ## [2.14.3] - 2026-07-04
 
 Doc/CI pre-launch fixes (no app behavior changed).

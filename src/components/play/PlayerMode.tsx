@@ -6,6 +6,7 @@ import { Bookmark, Clock, User, Sparkles, RefreshCw } from 'lucide-react';
 import HelpTooltip from '../shared/HelpTooltip';
 import PatternCard from './PatternCard';
 import type { PlayablePattern } from './PatternCard';
+import { loadRecent } from './recentPatterns';
 import { loadLocal } from '../assembler/SavedPatterns';
 import type { SavedPattern } from '../assembler/SavedPatterns';
 import { savedPatternToLinearSegments } from '../designer/designerUtils';
@@ -13,28 +14,12 @@ import { supabase } from '../../lib/supabase';
 import { hasCommunityConsent, setCommunityConsent } from '../../lib/communityConsent';
 import CommunityConsentBanner from '../shared/CommunityConsentBanner';
 
-const RECENT_KEY = 'sv-play-recent';
-const MAX_RECENT = 20;
-
 type SourceTab = 'recent' | 'local' | 'community' | 'ai';
 
 interface PlayerModeProps {
   activePatternId: string | null;
   onSelectPattern: (pattern: PlayablePattern) => void;
   onDeletePattern?: (patternId: string, source: PlayablePattern['source']) => void;
-}
-
-function loadRecent(): PlayablePattern[] {
-  try {
-    const raw = localStorage.getItem(RECENT_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-}
-
-export function addToRecent(pattern: PlayablePattern) {
-  const recent = loadRecent().filter(p => p.id !== pattern.id);
-  recent.unshift({ ...pattern, source: 'recent' });
-  localStorage.setItem(RECENT_KEY, JSON.stringify(recent.slice(0, MAX_RECENT)));
 }
 
 function savedPatternToPlayable(sp: SavedPattern, source: PlayablePattern['source']): PlayablePattern {
